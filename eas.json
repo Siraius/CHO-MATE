@@ -9,6 +9,7 @@
       "releaseChannel": "staging"
     },
     "preview": {
+      "developmentClient": false,
       "distribution": "internal",
       "releaseChannel": "staging"
     },
