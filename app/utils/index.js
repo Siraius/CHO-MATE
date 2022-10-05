@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { registerForPushNotificationsAsync, lowCandyNotification, lowLiquidNotification, lowResourcesNotification } from './notifications';
 
 export const loginValidationSchema = Yup.object().shape({
   email: Yup.string().required().email().label('Email'),
@@ -25,3 +26,5 @@ export const DispenseSchema = Yup.object().shape({
   liquidText: Yup.string().required().label('Liquid amount'),
   candyText: Yup.string().required().label('Candy amount'),
 });
+
+export { registerForPushNotificationsAsync, lowCandyNotification, lowLiquidNotification, lowResourcesNotification };

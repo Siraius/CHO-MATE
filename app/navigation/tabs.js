@@ -58,7 +58,7 @@ function MainNavigation() {
         }}
       />
       <Tab.Screen
-        name="Find"
+        name="Data"
         component={DataScreen}
         options={{
           tabBarIcon: ({ focused }) => (
@@ -72,7 +72,7 @@ function MainNavigation() {
         }}
       />
       <Tab.Screen
-        name="Data"
+        name="Account"
         component={AccountScreen}
         options={{
           tabBarIcon: ({ focused }) => (

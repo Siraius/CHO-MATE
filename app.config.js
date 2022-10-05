@@ -12,13 +12,22 @@ export default {
       resizeMode: 'contain',
       backgroundColor: '#ffffff',
     },
+    runtimeVersion: {
+      policy: "sdkVersion"
+    },
     updates: {
+      url: "https://u.expo.dev/42b38bb0-bc5b-48bf-a15f-c4e67919f70d",
       fallbackToCacheTimeout: 10,
     },
     assetBundlePatterns: ['assets/*'],
     ios: {
       bundleIdentifier: 'com.expo.chomate.chomate',
       supportsTablet: true,
+      infoPlist: {
+        UIBackgroundModes: [
+          "remote-notification"
+        ]
+      }
     },
     android: {
       package: 'com.expo.chomate.chomate',
