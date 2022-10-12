@@ -18,15 +18,19 @@ import { FormErrorMessage } from '../components/FormErrorMessage';
 import ListItemSeparator from '../components/ListItemSeparator';
 import colors from '../config/colors';
 import { auth, db } from '../config/firebase';
-import { DispenseSchema } from '../utils';
+import { GlucoseSchema } from '../utils';
 
-function DispenseScreen({ navigation }) {
+function DispenseScreenGlucose({ navigation }) {
+  const initialState = "Error dispensing! Check machine for more details.";
   let client;
   let connected = false;
   let liquidVal,
     candyVal = 0;
   const [snackbar, setSnackbar] = React.useState(false);
+  const [snackbarText, setSnackbarText] = React.useState(initialState);
   const [lottie, setLottie] = React.useState(false);
+  const [fadeTextVisible, setFadeTextVisible] = React.useState(false);
+  const [fadeText, setFadeText] = React.useState(false);
   const [animate, setAnimate] = React.useState(false);
   const onDismissSnackBar = () => setSnackbar(false);
 
@@ -67,12 +71,14 @@ function DispenseScreen({ navigation }) {
   useFocusEffect(
     React.useCallback(() => {
       // Do something when the screen is focused
-
+      setSnackbarText(initialState);
       return () => {
+        setAnimate(false);
+        setSnackbar(false);
+        setFadeTextVisible(false);
+        setSnackbarText(initialState);
         if (connected) {
           client.disconnect();
-          setAnimate(false);
-          setSnackbar(false);
           console.log('DISCONNECTING');
           connected = false;
         }
@@ -127,18 +133,68 @@ function DispenseScreen({ navigation }) {
         console.error("Couldn't create document: ", e);
       }
       setAnimate(false);
+      setFadeTextVisible(false);
       setLottie(true);
       client.disconnect();
     }
     if (message.payloadString === 'FAILED') {
       setAnimate(false);
       setLottie(false);
+      setFadeTextVisible(false);
       setSnackbar(true);
     }
   }
 
-  function buttonPress(candyAmount, liquidAmount) {
-    setLottie(false);
+  async function handleGlucose(glucoseAmount) {
+    let candyAmount = "0";
+    let liquidAmount = "0";
+    if (parseInt(glucoseAmount) <= 55) {
+      liquidAmount = "50";
+      candyAmount = "5";
+    }
+    if (parseInt(glucoseAmount) > 55 && parseInt(glucoseAmount) <= 70) {
+      liquidAmount = "30";
+      candyAmount = "5";
+    }
+    if (parseInt(glucoseAmount) > 70 && parseInt(glucoseAmount) <= 140) {
+      setAnimate(false);
+      setFadeTextVisible(false);
+      setSnackbarText("Glucose Levels are normal, so no dispensing required.");
+      setSnackbar(true);
+
+      try {
+        const docRef = await addDoc(collection(db, 'glucoseReadings'), {
+          glucose: glucoseAmount,
+          uid: auth.currentUser?.uid,
+          date: new Date(),
+        });
+        console.log('Created document with ID: ', docRef.id);
+      } catch (e) {
+        console.error("Couldn't create document: ", e);
+      }
+
+      return;
+    }
+    else {
+      liquidAmount = "20";
+      candyAmount = "5";
+    }
+    try {
+      const docRef = await addDoc(collection(db, 'glucoseReadings'), {
+        glucose: glucoseAmount,
+        uid: auth.currentUser?.uid,
+        date: new Date(),
+      });
+      console.log('Created document with ID: ', docRef.id);
+    } catch (e) {
+      console.error("Couldn't create document: ", e);
+    }
+
+    //begin connection to dispenser
+    setFadeTextVisible(false);
+    setFadeText("Sending to machine...");
+    setFadeTextVisible(true);
+
     client = new Paho.MQTT.Client('driver.cloudmqtt.com', 38763, Device.deviceName);
     client.onConnectionLost = onConnectionLost;
     client.onMessageArrived = onMessageArrived;
@@ -148,6 +204,16 @@ function DispenseScreen({ navigation }) {
       onSuccess: () => onConnect(candyAmount, liquidAmount),
       useSSL: true,
     });
+  }
+
+
+  function buttonPress(glucoseAmount) {
+    setLottie(false);
+    setFadeText("Getting Dispenser Outputs...");
+    setFadeTextVisible(true);
+    setAnimate(true);
+    AsyncStorage.setItem("GlucoseLevel", glucoseAmount);
+    handleGlucose(glucoseAmount);
   }
 
   return (
@@ -163,22 +229,23 @@ function DispenseScreen({ navigation }) {
             onDismissSnackBar();
           },
         }}>
-        Error dispensing! Check machine for more details.
+        {snackbarText}
       </Snackbar>
       <View style={styles.indicator}>
         <FadeInOut visible={animate} duration={500}>
           <ActivityIndicator size={40} animating={animate} style={{ marginBottom: 10 }} />
-          {animate && <Text  style={styles.listHeader}>Sending to Machine...</Text>}
+        </FadeInOut>
+        <FadeInOut visible={fadeTextVisible} duration={500}>
+          {fadeTextVisible && <Text style={styles.listHeader}>{fadeText}</Text>}
         </FadeInOut>
       </View>
       <Formik
         initialValues={{
-          liquidText: '',
-          candyText: '',
+          glucoseText: ''
         }}
-        validationSchema={DispenseSchema}
+        validationSchema={GlucoseSchema}
         onSubmit={(values, { resetForm }) => {
-          buttonPress(values.candyText, values.liquidText);
+          buttonPress(values.glucoseText);
           resetForm();
         }}>
         {({ values, touched, errors, handleChange, handleSubmit, handleBlur }) => (
@@ -193,45 +260,30 @@ function DispenseScreen({ navigation }) {
             }}>
             <Card.Content>
               <View style={styles.cardHeader}>
-                <Text  style={styles.title}>Dispense Sugar</Text>
+                <Text style={styles.title}>Dispense Sugar</Text>
               </View>
               <ListItemSeparator style={{ marginBottom: 10 }} />
-              <View style={styles.cardItem}>
-                <Text  style={styles.listHeader}>Liquid Amount (Milliliters):</Text>
-                <TextInput
-                  style={{ width: '90%' }}
-                  left={<TextInput.Icon name="water-outline" />}
-                  theme={{ roundness: 5 }}
-                  selectionColor={colors.primary}
-                  underlineColor={colors.primary}
-                  activeUnderlineColor={colors.primary}
-                  label="Liquid Dispense Amount"
-                  value={values.liquidText}
-                  onChangeText={handleChange('liquidText')}
-                />
-                <View style={styles.liquidError}>
-                  <FormErrorMessage error={errors.liquidText} visible={errors.liquidText} />
-                </View>
-              </View>
-              <View style={styles.cardItem}>
-                <Text  style={styles.listHeader}>Candy Amount (Grams):</Text>
-                <TextInput
-                  style={{ width: '90%' }}
-                  left={<TextInput.Icon name="circle-outline" />}
-                  theme={{ roundness: 5 }}
-                  selectionColor={colors.secondary}
-                  underlineColor={colors.secondary}
-                  activeUnderlineColor={colors.secondary}
-                  label="Candy Dispense Amount"
-                  value={values.candyText}
-                  onChangeText={handleChange('candyText')}
-                />
-                <View style={styles.candyError}>
-                  <FormErrorMessage error={errors.candyText} visible={errors.candyText} />
+              <View style={styles.cardContent}>
+                <View style={styles.cardItem}>
+                  <Text style={styles.listHeader}>Current Glucose Level (mg/dL):</Text>
+                  <TextInput
+                    style={{ width: '90%' }}
+                    left={<TextInput.Icon name="water-plus-outline" />}
+                    theme={{ roundness: 5 }}
+                    selectionColor={colors.primary}
+                    underlineColor={colors.primary}
+                    activeUnderlineColor={colors.primary}
+                    label="Current Glucose Level"
+                    value={values.glucoseText}
+                    onChangeText={handleChange('glucoseText')}
+                  />
+                  <View style={styles.liquidError}>
+                    <FormErrorMessage error={errors.glucoseText} visible={errors.glucoseText} />
+                  </View>
                 </View>
               </View>
               <View style={[styles.cardItem, { marginTop: 35 }]}>
-                <AppButton onPress={handleSubmit} title="Dispense" />
+                <AppButton onPress={handleSubmit} title="Check" />
               </View>
             </Card.Content>
             <Card.Actions />
@@ -244,11 +296,16 @@ function DispenseScreen({ navigation }) {
           <Ionicons size={30} name="arrow-back" />
         </TouchableOpacity>
       </View>
+      <View style={styles.manualButton}>
+        <TouchableOpacity onPress={() => navigation.navigate('Dispense Manual')}>
+          <Text style={styles.manualText}>MANUAL MODE</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
-export default DispenseScreen;
+export default DispenseScreenGlucose;
 
 const styles = StyleSheet.create({
   container: {
@@ -260,6 +317,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: Constants.statusBarHeight + 10,
     left: 20,
+  },
+  manualButton: {
+    position: 'absolute',
+    top: Constants.statusBarHeight + 10,
+    right: 10
+  },
+  manualText: {
+    fontSize: 20,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    color: colors.secondary
   },
   shadow: {
     shadowColor: 'black',
@@ -281,6 +349,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 15,
+  },
+  cardContent: {
+    marginVertical: 60,
   },
   title: {
     fontSize: 30,

@@ -22,13 +22,13 @@ export async function registerForPushNotificationsAsync() {
             finalStatus = status;
         }
         if (finalStatus !== 'granted') {
-            alert('Failed to get push token for push notification!');
+            console.log('Failed to get push token for push notification!');
             return;
         }
         token = (await Notifications.getExpoPushTokenAsync()).data;
         console.log(token);
     } else {
-        alert('Must use physical device for Push Notifications');
+        console.log('Must use physical device for Push Notifications');
     }
 
     return token;
@@ -62,6 +62,7 @@ export async function lowResourcesNotification() {
             title: "Your CHO-MATE is running low on candy and liquid!",
             body: "Please refill your CHO-MATE to continue dispensing.",
             data: { object: "both", status: "low" },
-        }
+        },
+        trigger: { seconds: 8 },
     })
 };

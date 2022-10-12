@@ -27,4 +27,8 @@ export const DispenseSchema = Yup.object().shape({
   candyText: Yup.string().required().label('Candy amount'),
 });
 
+export const GlucoseSchema = Yup.object().shape({
+  glucoseText: Yup.string().required().label('Glucose amount')
+})
+
 export { registerForPushNotificationsAsync, lowCandyNotification, lowLiquidNotification, lowResourcesNotification };
