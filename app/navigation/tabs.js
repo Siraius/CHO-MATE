@@ -8,8 +8,10 @@ import { StyleSheet, Text, View } from 'react-native';
 import colors from '../config/colors';
 import AccountScreen from '../screens/AccountScreen';
 import DataScreen from '../screens/DataScreen';
-import DispenseScreen from '../screens/DispenseScreen';
+import DispenseScreenGlucose from '../screens/DispenseScreenGlucose';
+import DispenseScreenManual from '../screens/DispenseScreenManual';
 import HomeScreen from '../screens/HomeScreen';
+import TestingScreen from '../screens/TestingScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -21,7 +23,8 @@ const HomeNavigator = () => (
       headerShown: false,
     }}>
     <screenTab.Screen name="Home" component={HomeScreen} />
-    <screenTab.Screen name="Dispense" component={DispenseScreen} />
+    <screenTab.Screen name="Dispense" component={DispenseScreenGlucose} />
+    <screenTab.Screen name="Dispense Manual" component={DispenseScreenManual} />
   </screenTab.Navigator>
 );
 
@@ -58,7 +61,7 @@ function MainNavigation() {
         }}
       />
       <Tab.Screen
-        name="Find"
+        name="Data"
         component={DataScreen}
         options={{
           tabBarIcon: ({ focused }) => (
@@ -72,7 +75,7 @@ function MainNavigation() {
         }}
       />
       <Tab.Screen
-        name="Data"
+        name="Account"
         component={AccountScreen}
         options={{
           tabBarIcon: ({ focused }) => (
@@ -84,6 +87,20 @@ function MainNavigation() {
               />
               <Text style={{ color: focused ? colors.primary : 'black', fontSize: 20 }}>
                 ACCOUNT
+              </Text>
+            </View>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Testing"
+        component={TestingScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <View style={{ alignItems: 'center', justifyContent: 'center', top: 10 }}>
+              <Ionicons size={30} name="cog" color={focused ? colors.primary : 'black'} />
+              <Text style={{ color: focused ? colors.primary : 'black', fontSize: 20 }}>
+                TESTING
               </Text>
             </View>
           ),
