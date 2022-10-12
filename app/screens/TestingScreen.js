@@ -11,13 +11,31 @@ import { lowLiquidNotification, lowCandyNotification, lowResourcesNotification }
 
 function TestingScreen({ navigate }) {
     const [date, setDate] = React.useState("No Fetch");
+    const [status, setStatus] = React.useState("--");
+    const [isRegistered, setIsRegistered] = React.useState(false);
+    const [pushToken, setPushToken] = React.useState("No Token");
     useFocusEffect(React.useCallback(() => {
         AsyncStorage.getItem("FetchDate").then((value) => {
             if (value !== null) {
                 setDate(value);
             }
         });
-    }, [date]));
+        AsyncStorage.getItem("FetchStatus").then((value) => {
+            if (value !== null) {
+                setStatus(value);
+            }
+        });
+        AsyncStorage.getItem("FetchRegistered").then((value) => {
+            if (value !== null) {
+                setIsRegistered(value);
+            }
+        });
+        AsyncStorage.getItem("PushToken").then((value) => {
+            if (value !== null) {
+                setPushToken(value);
+            }
+        });
+    }, [date, status, isRegistered, pushToken]));
     return (
         <ImageBackground
             blurRadius={10}
@@ -29,6 +47,20 @@ function TestingScreen({ navigate }) {
                     <View style={styles.row}>
                         <Text style={styles.title}>LATEST FETCH:</Text>
                         <Text style={styles.authText}>{date}</Text>
+                    </View>
+                    <View style={styles.row}>
+                        <Text style={styles.title}>FETCH STATUS:</Text>
+                        <Text style={styles.authText}>{status}</Text>
+                    </View>
+                    <View style={styles.row}>
+                        <Text style={styles.title}>IS REGISTERED:</Text>
+                        <Text style={styles.authText}>{isRegistered}</Text>
+                    </View>
+                    <View style={styles.row}>
+                        <Text style={styles.title}>PUSH TOKEN:</Text>
+                    </View>
+                    <View>
+                        <Text style={{ fontSize: 20 }}>{pushToken}</Text>
                     </View>
                 </View>
                 <View style={{ width: '60%' }}>

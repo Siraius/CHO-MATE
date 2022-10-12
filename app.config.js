@@ -25,7 +25,8 @@ export default {
       supportsTablet: true,
       infoPlist: {
         UIBackgroundModes: [
-          "remote-notification"
+          "remote-notification",
+          "fetch"
         ]
       }
     },

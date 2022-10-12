@@ -128,6 +128,8 @@ export default function App() {
     registerBackgroundFetchAsync();
     const status = await BackgroundFetch.getStatusAsync();
     const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
+    AsyncStorage.setItem("FetchStatus", BackgroundFetch.BackgroundFetchStatus[status]);
+    AsyncStorage.setItem("FetchRegistered", isRegistered.toString());
     console.log("Status: ", BackgroundFetch.BackgroundFetchStatus[status]);
     console.log("isRegistered: ", isRegistered);
   };
